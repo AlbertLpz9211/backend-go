@@ -1,0 +1,8 @@
+FROM node:25-alpine
+WORKDIR /app
+COPY api-node/servidor.js /app/servidor.js
+# USER node NO sirve: el kubelet rechaza el pod con "image has non-numeric user".
+USER 1000:1000
+ENV PORT=8080
+EXPOSE 8080
+CMD ["node", "/app/servidor.js"]

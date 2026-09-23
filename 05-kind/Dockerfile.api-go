@@ -1,0 +1,9 @@
+# Se construye el binario FUERA de la imagen (ver ENSAYO.md) y aqui solo se copia.
+FROM gcr.io/distroless/static-debian12:nonroot
+WORKDIR /app
+COPY api-go /app/api-go
+# Usuario NUMERICO: runAsNonRoot exige numero, no nombre.
+USER 65532:65532
+ENV PORT=8080
+EXPOSE 8080
+ENTRYPOINT ["/app/api-go"]

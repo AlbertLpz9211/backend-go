@@ -1,0 +1,97 @@
+# Despliegue de la API de libros en Kubernetes.
+#   kubectl apply -f k8s/api.yaml
+#
+# Dos objetos:
+#   1) Deployment "api-libros": "quiero 3 copias (pods) de este contenedor
+#      siempre vivas". Si una muere, Kubernetes crea otra solo.
+#   2) Service "api-libros" (NodePort 30080): una dirección fija que reparte
+#      las conexiones entre los pods que estén listos.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-libros
+  labels:
+    app: api-libros
+spec:
+  replicas: 3                    # tres réplicas = tres procesos con su PROPIA memoria
+  selector:
+    matchLabels:
+      app: api-libros            # el Deployment "adopta" los pods con esta etiqueta
+  template:                      # molde con el que se crea cada pod
+    metadata:
+      labels:
+        app: api-libros
+    spec:
+      # Seguridad: prohibido correr como root. El número debe coincidir con
+      # el USER 65532 del Dockerfile (runAsNonRoot exige un usuario NUMÉRICO).
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+      containers:
+        - name: api
+          image: api-libros:v1
+          # La imagen se cargó con "kind load docker-image"; no existe en
+          # ningún registro. IfNotPresent = "usa la que ya tienes".
+          # (Con la etiqueta :latest el valor por omisión sería Always y el
+          # pod se quedaría en ErrImagePull.)
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+          # readinessProbe: "¿ya puedes recibir tráfico?". Mientras falle, el
+          # Service NO le manda peticiones a este pod.
+          readinessProbe:
+            httpGet:
+              path: /api/v1/salud
+              port: 8080
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          # livenessProbe: "¿sigues vivo?". Si falla varias veces seguidas,
+          # Kubernetes REINICIA el contenedor.
+          livenessProbe:
+            httpGet:
+              path: /api/v1/salud
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          # requests: lo que se reserva para el pod. limits: el techo.
+          # Una API de Go así usa unos pocos MiB; 32Mi deja margen de sobra.
+          resources:
+            requests:
+              cpu: "50m"         # 5 % de un núcleo
+              memory: "16Mi"
+            limits:
+              cpu: "250m"
+              memory: "32Mi"
+          # Apagado sin cortes. Al borrar un pod, Kubernetes hace DOS cosas a la
+          # vez: lo saca del Service y le manda SIGTERM. Si el proceso muere al
+          # instante, algunas conexiones todavía llegan a un pod que ya no
+          # existe (curl se queda colgado). Esperar 5 s antes del SIGTERM da
+          # tiempo a que el Service se actualice. (La acción "sleep" es nativa
+          # de Kubernetes: no necesita shell, y distroless no tiene shell.)
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true   # la API no escribe en disco
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-libros
+spec:
+  # NodePort: abre el puerto 30080 en el nodo. Gracias a extraPortMappings
+  # (k8s/kind-config.yaml) ese puerto llega hasta la Mac: curl localhost:30080
+  type: NodePort
+  selector:
+    app: api-libros              # manda tráfico a los pods con esta etiqueta
+  ports:
+    - port: 80                   # puerto del Service dentro del clúster
+      targetPort: 8080           # puerto del contenedor
+      nodePort: 30080            # puerto en el nodo (rango válido 30000-32767)

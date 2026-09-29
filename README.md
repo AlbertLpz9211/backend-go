@@ -8,6 +8,7 @@ Código de las demostraciones de clase. Cada sesión vive en su propia carpeta
 | Sesión | Fecha | Tema | Carpeta |
 | --- | --- | --- | --- |
 | 2 | 22 sep | 1.2 Go frente a Node.js, Python y Java. Gorutinas y canales | [`demos-sesion2/`](demos-sesion2/) |
+| 4 | 29 sep | 2.1 REST y `net/http`. La API en Kubernetes (kind) | [`demos-sesion4/`](demos-sesion4/) |
 
 ## Requisitos
 
@@ -34,7 +35,7 @@ go run ./01-gorutinas/paso2-waitgroup   # cada carpeta es un programa completo
 ```
 
 Las instrucciones y salidas esperadas de cada sesión están en su bitácora
-(por ejemplo, `demos-sesion2/ENSAYO.md`).
+(por ejemplo, `demos-sesion2/ENSAYO.md`, `demos-sesion4/SALIDAS.md`).
 
 ## Ramas: una por día de clase
 

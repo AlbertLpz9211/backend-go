@@ -1,0 +1,5 @@
+# Solo necesitamos go.mod y api/ para construir la imagen.
+*
+!go.mod
+!api/
+api/*_test.go

@@ -9,6 +9,14 @@
 #   5. Construye la imagen api-libros:v1 y la carga en el clúster (kind load).
 #   6. kubectl apply, espera el rollout y hace una prueba de humo.
 #
+# Es el script del DOCENTE (lo corre antes de la clase). Un alumno también puede
+# usarlo si quiere reproducir el bloque de Kubernetes en su máquina.
+#
+# Sistemas:
+#   macOS y Linux:  ./montar_laboratorio.sh
+#   Windows:        desde Git Bash (NO PowerShell ni CMD), con Docker Desktop
+#                   encendido (backend WSL2):  ./montar_laboratorio.sh
+#
 # Uso:  ./montar_laboratorio.sh
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -29,7 +37,12 @@ paso "1. Herramientas"
 for h in go docker kind kubectl curl; do
   command -v "$h" >/dev/null || { echo "Falta '$h' en el PATH" >&2; exit 1; }
 done
-docker info >/dev/null 2>&1 || { echo "Docker no responde: abre Docker Desktop (open -a Docker) y reintenta" >&2; exit 1; }
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker no responde. Abre Docker Desktop y espera a que diga 'Engine running':" >&2
+  echo "  macOS:   open -a Docker" >&2
+  echo "  Windows: menú Inicio > Docker Desktop" >&2
+  exit 1
+fi
 echo "    $(go version)"
 echo "    docker $(docker version --format '{{.Server.Version}}')"
 echo "    $(kind version)"
@@ -40,7 +53,14 @@ T0=$SECONDS
 go vet ./...
 sin_formato="$(gofmt -l .)"
 if [ -n "$sin_formato" ]; then echo "gofmt: archivos sin formato:"; echo "$sin_formato"; exit 1; fi
-go test -race ./...
+# -race necesita cgo en Windows y Linux (en Windows, además, gcc). Se prueba
+# con una compilación vacía: si no se puede, se corren las pruebas sin -race.
+if go test -race -run '^$' ./api >/dev/null 2>&1; then
+  go test -race ./...
+else
+  echo "    aviso: este sistema no admite -race (falta cgo/gcc); pruebas sin -race"
+  go test ./...
+fi
 cronometro
 
 paso "3. Imágenes base"
@@ -65,9 +85,12 @@ if kind get clusters 2>/dev/null | grep -qx "$CLUSTER"; then
     docker start "$CLUSTER-control-plane" >/dev/null
   fi
 else
-  if lsof -nP -iTCP:30080 -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "El puerto 30080 ya está ocupado en la Mac:" >&2
-    lsof -nP -iTCP:30080 -sTCP:LISTEN >&2
+  # ¿Alguien escucha ya en 30080? curl sale con 7 si NADIE responde (libre).
+  # Se usa curl y no lsof porque lsof no existe en Windows.
+  rc=0; curl -s -o /dev/null --max-time 2 http://localhost:30080/ || rc=$?
+  if [ "$rc" -ne 7 ]; then
+    echo "El puerto 30080 ya está ocupado (curl respondió con código $rc)." >&2
+    echo "Cierra lo que lo use, o bórralo con ./desmontar.sh si es un clúster viejo." >&2
     exit 1
   fi
   kind create cluster --config k8s/kind-config.yaml

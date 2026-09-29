@@ -1,0 +1,12 @@
+# Finales de línea fijos, sin importar el sistema de quien clone.
+# Sin esto, Git en Windows (core.autocrlf=true) convierte los .sh a CRLF y
+# bash falla con: $'\r': command not found  /  bash\r: No such file or directory
+*.sh    text eol=lf
+*.go    text eol=lf
+*.mod   text eol=lf
+*.sum   text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.js    text eol=lf
+*.md    text eol=lf
+Dockerfile*  text eol=lf

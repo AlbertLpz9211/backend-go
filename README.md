@@ -14,6 +14,18 @@ Código de las demostraciones de clase. Cada sesión vive en su propia carpeta
 - Go 1.26 o superior (`go version`).
 - Docker y [kind](https://kind.sigs.k8s.io/) con `kubectl`, solo para los bloques de Kubernetes.
 
+## macOS y Windows
+
+- `go run`, `go build` y `go test` funcionan igual en los dos sistemas.
+- Los scripts `.sh` son de **bash**. En macOS y Linux se usan tal cual; en Windows se corren desde
+  **Git Bash** (viene con Git para Windows), no desde PowerShell ni CMD.
+- En PowerShell, `curl` es un alias de `Invoke-WebRequest` y no acepta las mismas opciones. Si
+  no tienes Git Bash, escribe `curl.exe`.
+- El repositorio fija finales de línea LF (`.gitattributes`), así que los `.sh` funcionan aunque
+  clones en Windows.
+- Kubernetes con kind requiere Docker Desktop (en Windows, con WSL2).
+- `go test -race` en Windows necesita un compilador de C (gcc). Si no lo tienes, usa `go test`.
+
 ## Cómo usar una sesión
 
 ```bash

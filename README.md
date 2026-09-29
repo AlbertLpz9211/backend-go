@@ -8,7 +8,6 @@ Código de las demostraciones de clase. Cada sesión vive en su propia carpeta
 | Sesión | Fecha | Tema | Carpeta |
 | --- | --- | --- | --- |
 | 2 | 22 sep | 1.2 Go frente a Node.js, Python y Java. Gorutinas y canales | [`demos-sesion2/`](demos-sesion2/) |
-| 4 | 29 sep | 2.1 REST y `net/http`. La API en Kubernetes (kind) | [`demos-sesion4/`](demos-sesion4/) |
 
 ## Requisitos
 
@@ -18,9 +17,32 @@ Código de las demostraciones de clase. Cada sesión vive en su propia carpeta
 ## Cómo usar una sesión
 
 ```bash
-cd demos-sesion4
-go run ./paso1-hola        # cada carpeta es un programa completo
+cd demos-sesion2
+go run ./01-gorutinas/paso2-waitgroup   # cada carpeta es un programa completo
 ```
 
 Las instrucciones y salidas esperadas de cada sesión están en su bitácora
-(`demos-sesion2/ENSAYO.md`, `demos-sesion4/SALIDAS.md`).
+(por ejemplo, `demos-sesion2/ENSAYO.md`).
+
+## Ramas: una por día de clase
+
+- `main` contiene solo las sesiones **ya impartidas**.
+- Cada día de clase se prepara en su propia rama, `sesion-NN` (dos dígitos: `sesion-04`,
+  `sesion-05`, …), que nace de `main` y agrega su carpeta `demos-sesionN/` y su fila en la
+  tabla de arriba.
+- El día de la clase, esa rama se une a `main` y se publica.
+
+```bash
+# Preparar la próxima sesión
+git switch main && git pull
+git switch -c sesion-05
+# ... trabajo, commits ...
+
+# El día de la clase: unir y publicar
+git switch main
+git merge --no-ff sesion-05
+git push origin main sesion-05
+```
+
+Las correcciones posteriores a una sesión ya impartida se hacen en su rama y se vuelven a unir
+a `main`.

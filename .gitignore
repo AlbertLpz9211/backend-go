@@ -1,3 +1,14 @@
-# Binarios que se construyen en el ensayo
-05-kind/api-go
-05-kind/src-go/main
+# Sistema
+.DS_Store
+
+# Go: binarios, pruebas y perfiles
+*.test
+*.out
+bin/
+
+# Sesión 2: binarios que se construyen en el ensayo
+demos-sesion2/05-kind/api-go
+demos-sesion2/05-kind/src-go/main
+
+# Sesión 4: binario de la API
+demos-sesion4/api/api
